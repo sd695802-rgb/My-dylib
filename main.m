@@ -1,8 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-static UIWindow *floatingButtonWindow = nil;
-
 @interface FoxMenuController : UIViewController
 @end
 
@@ -20,7 +18,7 @@ static UIWindow *floatingButtonWindow = nil;
     [self.view addSubview:titleLabel];
     
     UIButton *activateButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    activateButton.frame = CGRectMake(40, 120, self.view.bounds.size.width - 80, 50];
+    activateButton.frame = CGRectMake(40, 120, self.view.bounds.size.width - 80, 50);
     [activateButton setTitle:@"تفعيل 🦊" forState:UIControlStateNormal];
     [activateButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
     activateButton.backgroundColor = [UIColor colorWithRed:1.00 green:0.55 blue:0.00 alpha:1.0];
