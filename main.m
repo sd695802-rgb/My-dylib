@@ -94,7 +94,7 @@ static UIWindow *welcomeOverlayWindow = nil;
     return button;
 }
 
-- - (void)openTelegramChannel {
+- (void)openTelegramChannel {
     NSURL *url = [NSURL URLWithString:@"https://t.me/ipastrong"];
     if ([[UIApplication sharedApplication] canOpenURL:url]) {
         [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
