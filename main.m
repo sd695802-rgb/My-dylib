@@ -1,176 +1,41 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-static UIWindow *customOverlayWindow = nil;
+static UIWindow *floatingButtonWindow = nil;
 
-@interface CustomWelcomeViewController : UIViewController
+@interface FoxMenuController : UIViewController
 @end
 
-@implementation CustomWelcomeViewController
+@implementation FoxMenuController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.view.backgroundColor = [UIColor colorWithRed:0.08 green:0.08 blue:0.08 alpha:0.95];
     
-    // خلفية داكنة تغطي الشاشة بالكامل
-    self.view.backgroundColor = [UIColor colorWithRed:0.08 green:0.08 blue:0.08 alpha:1.0];
-    
-    // 1. أيقونة الثعلب
-    UILabel *foxLabel = [[UILabel alloc] init];
-    foxLabel.text = @"🦊";
-    foxLabel.font = [UIFont systemFontOfSize:80];
-    foxLabel.textAlignment = NSTextAlignmentCenter;
-    foxLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:foxLabel];
-    
-    // 2. العنوان الرئيسي FOX IPA
-    UILabel *titleLabel = [[UILabel alloc] init];
-    titleLabel.text = @"FOX IPA";
-    titleLabel.font = [UIFont boldSystemFontOfSize:32];
+    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 40, self.view.bounds.size.width - 40, 40)];
+    titleLabel.text = @"FOX CONFIG 🦊";
     titleLabel.textColor = [UIColor colorWithRed:1.00 green:0.55 blue:0.00 alpha:1.0];
+    titleLabel.font = [UIFont boldSystemFontOfSize:22];
     titleLabel.textAlignment = NSTextAlignmentCenter;
-    titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:titleLabel];
     
-    // 3. النص الفرعي
-    UILabel *subtitleLabel = [[UILabel alloc] init];
-    subtitleLabel.text = @"أهلاً وسهلاً👋\nنتمنى ان ينال اعجابك التطبيق😍 ولاتنسى FOX الافضل";
-    subtitleLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightMedium];
-    subtitleLabel.textColor = [UIColor lightGrayColor];
-    subtitleLabel.textAlignment = NSTextAlignmentCenter;
-    subtitleLabel.numberOfLines = 0;
-    subtitleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:subtitleLabel];
-    
-    // StackView لتنظيم الأزرار
-    UIStackView *stackView = [[UIStackView alloc] init];
-    stackView.axis = UILayoutConstraintAxisVertical;
-    stackView.spacing = 12;
-    stackView.distribution = UIStackViewDistributionFillEqually;
-    stackView.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:stackView];
-    
-    // الزر 1: دخول التطبيق
-    UIButton *enterButton = [self createButtonWithTitle:@"دخول التطبيق 🚀" 
-                                        backgroundColor:[UIColor colorWithRed:1.00 green:0.55 blue:0.00 alpha:1.0] 
-                                              textColor:[UIColor blackColor] 
-                                            borderColor:nil];
-    [enterButton addTarget:self action:@selector(closeVC) forControlEvents:UIControlEventTouchUpInside];
-    [stackView addArrangedSubview:enterButton];
-    
-    // الزر 2: قناة التيلجرام
-    UIButton *telegramButton = [self createButtonWithTitle:@"قناة التيلجرام 🦊" 
-                                           backgroundColor:[UIColor colorWithRed:0.14 green:0.14 blue:0.14 alpha:1.0] 
-                                                 textColor:[UIColor whiteColor] 
-                                               borderColor:[UIColor colorWithRed:1.00 green:0.55 blue:0.00 alpha:1.0]];
-    [telegramButton addTarget:self action:@selector(openTelegram) forControlEvents:UIControlEventTouchUpInside];
-    [stackView addArrangedSubview:telegramButton];
-    
-    // الزر 3: صاحب القناة
-    UIButton *ownerButton = [self createButtonWithTitle:@"صاحب القناة 🦊" 
-                                        backgroundColor:[UIColor colorWithRed:0.14 green:0.14 blue:0.14 alpha:1.0] 
-                                              textColor:[UIColor whiteColor] 
-                                            borderColor:[UIColor colorWithRed:1.00 green:0.55 blue:0.00 alpha:1.0]];
-    [ownerButton addTarget:self action:@selector(openOwner) forControlEvents:UIControlEventTouchUpInside];
-    [stackView addArrangedSubview:ownerButton];
-
-    // الزر 4: سيرفر الديسكورد
-    UIButton *discordButton = [self createButtonWithTitle:@"سيرفر الديسكورد🦊" 
-                                         backgroundColor:[UIColor colorWithRed:0.14 green:0.14 blue:0.14 alpha:1.0] 
-                                               textColor:[UIColor whiteColor] 
-                                             borderColor:[UIColor colorWithRed:1.00 green:0.55 blue:0.00 alpha:1.0]];
-    [discordButton addTarget:self action:@selector(openDiscord) forControlEvents:UIControlEventTouchUpInside];
-    [stackView addArrangedSubview:discordButton];
-    
-    // القيود والترتيب الشكلي
-    [NSLayoutConstraint activateConstraints:@[
-        [foxLabel.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:50],
-        [foxLabel.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
-        
-        [titleLabel.topAnchor constraintEqualToAnchor:foxLabel.bottomAnchor constant:10],
-        [titleLabel.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
-        
-        [subtitleLabel.topAnchor constraintEqualToAnchor:titleLabel.bottomAnchor constant:15],
-        [subtitleLabel.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
-        [subtitleLabel.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
-        
-        [stackView.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-30],
-        [stackView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:25],
-        [stackView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-25],
-        [enterButton.heightAnchor constraintEqualToConstant:50]
-    ]];
+    UIButton *activateButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    activateButton.frame = CGRectMake(40, 120, self.view.bounds.size.width - 80, 50];
+    [activateButton setTitle:@"تفعيل 🦊" forState:UIControlStateNormal];
+    [activateButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    activateButton.backgroundColor = [UIColor colorWithRed:1.00 green:0.55 blue:0.00 alpha:1.0];
+    activateButton.titleLabel.font = [UIFont boldSystemFontOfSize:18];
+    activateButton.layer.cornerRadius = 14;
+    [activateButton addTarget:self action:@selector(activateTapped) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:activateButton];
 }
 
-- (UIButton *)createButtonWithTitle:(NSString *)title backgroundColor:(UIColor *)bgColor textColor:(UIColor *)textColor borderColor:(UIColor *)borderColor {
-    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
-    [button setTitle:title forState:UIControlStateNormal];
-    [button setTitleColor:textColor forState:UIControlStateNormal];
-    button.titleLabel.font = [UIFont boldSystemFontOfSize:16];
-    button.backgroundColor = bgColor;
-    button.layer.cornerRadius = 14;
-    if (borderColor) {
-        button.layer.borderColor = borderColor.CGColor;
-        button.layer.borderWidth = 1.5;
-    }
-    return button;
-}
-
-- (void)closeVC {
-    customOverlayWindow.hidden = YES;
-    customOverlayWindow = nil;
-}
-
-- (void)openTelegram {
-    NSURL *url = [NSURL URLWithString:@"https://t.me/ipa_fox"];
-    if ([[UIApplication sharedApplication] canOpenURL:url]) {
-        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
-    }
-}
-
-- (void)openOwner {
-    NSURL *url = [NSURL URLWithString:@"https://t.me/ipa1fox"];
-    if ([[UIApplication sharedApplication] canOpenURL:url]) {
-        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
-    }
-}
-
-- (void)openDiscord {
-    NSURL *url = [NSURL URLWithString:@"https://discord.gg/xBdnVWk8r"];
-    if ([[UIApplication sharedApplication] canOpenURL:url]) {
-        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
-    }
+- (void)activateTapped {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"FOX IPA"
+                                                                   message:@"تم تنفيذ الأمر بنجاح يا boss man!"
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"موافق" style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 @end
-
-static void showOverlayWindow() {
-    UIWindowScene *activeScene = nil;
-    if (@available(iOS 13.0, *)) {
-        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:[UIWindowScene class]]) {
-                activeScene = (UIWindowScene *)scene;
-                break;
-            }
-        }
-    }
-    
-    if (@available(iOS 13.0, *)) {
-        if (activeScene) {
-            customOverlayWindow = [[UIWindow alloc] initWithWindowScene:activeScene];
-        } else {
-            customOverlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-        }
-    } else {
-        customOverlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    }
-    
-    customOverlayWindow.windowLevel = UIWindowLevelAlert + 1;
-    customOverlayWindow.rootViewController = [[CustomWelcomeViewController alloc] init];
-    [customOverlayWindow makeKeyAndVisible];
-}
-
-__attribute__((constructor))
-static void initialize() {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        showOverlayWindow();
-    });
-}
