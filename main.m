@@ -1,6 +1,8 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+static UIWindow *customOverlayWindow = nil;
+
 @interface CustomWelcomeViewController : UIViewController
 @end
 
@@ -9,11 +11,10 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    // خلفية الشاشة داكنة بأسلوب Fox Theme
+    // خلفية داكنة تغطي الشاشة بالكامل
     self.view.backgroundColor = [UIColor colorWithRed:0.08 green:0.08 blue:0.08 alpha:1.0];
-    self.modalPresentationStyle = UIModalPresentationFullScreen;
     
-    // 1. أيقونة الثعلب البارزة
+    // 1. أيقونة الثعلب
     UILabel *foxLabel = [[UILabel alloc] init];
     foxLabel.text = @"🦊";
     foxLabel.font = [UIFont systemFontOfSize:80];
@@ -21,11 +22,11 @@
     foxLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:foxLabel];
     
-    // 2. العنوان الرئيسي FOX PLUS
+    // 2. العنوان الرئيسي FOX IPA
     UILabel *titleLabel = [[UILabel alloc] init];
-    titleLabel.text = @"FOX PLUS";
+    titleLabel.text = @"FOX IPA";
     titleLabel.font = [UIFont boldSystemFontOfSize:32];
-    titleLabel.textColor = [UIColor colorWithRed:1.00 green:0.55 blue:0.00 alpha:1.0]; // لون برتقالي الثعلب
+    titleLabel.textColor = [UIColor colorWithRed:1.00 green:0.55 blue:0.00 alpha:1.0];
     titleLabel.textAlignment = NSTextAlignmentCenter;
     titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:titleLabel];
@@ -40,7 +41,7 @@
     subtitleLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:subtitleLabel];
     
-    // StackView لتنظيم الأزرار الـ 4 رأسياً
+    // StackView لتنظيم الأزرار
     UIStackView *stackView = [[UIStackView alloc] init];
     stackView.axis = UILayoutConstraintAxisVertical;
     stackView.spacing = 12;
@@ -80,7 +81,7 @@
     [discordButton addTarget:self action:@selector(openDiscord) forControlEvents:UIControlEventTouchUpInside];
     [stackView addArrangedSubview:discordButton];
     
-    // القيود والترتيب الشكلي (Constraints)
+    // القيود والترتيب الشكلي
     [NSLayoutConstraint activateConstraints:@[
         [foxLabel.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:50],
         [foxLabel.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
@@ -114,7 +115,8 @@
 }
 
 - (void)closeVC {
-    [self dismissViewControllerAnimated:YES completion:nil];
+    customOverlayWindow.hidden = YES;
+    customOverlayWindow = nil;
 }
 
 - (void)openTelegram {
@@ -140,28 +142,35 @@
 
 @end
 
-__attribute__((constructor))
-static void initialize() {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        UIWindow *keyWindow = nil;
-        for (UIWindow *window in [UIApplication sharedApplication].windows) {
-            if (window.isKeyWindow) {
-                keyWindow = window;
+static void showOverlayWindow() {
+    UIWindowScene *activeScene = nil;
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:[UIWindowScene class]]) {
+                activeScene = (UIWindowScene *)scene;
                 break;
             }
         }
-        if (!keyWindow && [UIApplication sharedApplication].windows.count > 0) {
-            keyWindow = [UIApplication sharedApplication].windows[0];
+    }
+    
+    if (@available(iOS 13.0, *)) {
+        if (activeScene) {
+            customOverlayWindow = [[UIWindow alloc] initWithWindowScene:activeScene];
+        } else {
+            customOverlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
         }
+    } else {
+        customOverlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    }
+    
+    customOverlayWindow.windowLevel = UIWindowLevelAlert + 1;
+    customOverlayWindow.rootViewController = [[CustomWelcomeViewController alloc] init];
+    [customOverlayWindow makeKeyAndVisible];
+}
 
-        UIViewController *rootViewController = keyWindow.rootViewController;
-        while (rootViewController.presentedViewController) {
-            rootViewController = rootViewController.presentedViewController;
-        }
-
-        CustomWelcomeViewController *welcomeVC = [[CustomWelcomeViewController alloc] init];
-        if (rootViewController) {
-            [rootViewController presentViewController:welcomeVC animated:YES completion:nil];
-        }
+__attribute__((constructor))
+static void initialize() {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        showOverlayWindow();
     });
 }
