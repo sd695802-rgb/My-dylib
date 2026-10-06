@@ -1,158 +1,59 @@
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
 
-static UIWindow *welcomeOverlayWindow = nil;
-
-@interface StrongWelcomeViewController : UIViewController
+// دالة وهمية أو استبدادية لتمثيل مدير المحادثات أو خدمة الرسائل في تيك توك
+// ملاحظة: يجب عليك استخراج الأسماء الصحيحة عبر Hopper أو class-dump للنسخة لديك
+@interface AWEIMManager : NSObject
++ (instancetype)sharedManager;
+- (void)sendMessage:(NSString *)text toUser:(NSString *)secUid completion:(void(^)(BOOL success))completion;
+- (NSArray *)fetchActiveStreakFriends; // دالة افتراضية لجلب قائمة أصدقاء الستريك
 @end
 
-@implementation StrongWelcomeViewController
+// متغير لتجنب تكرار الإرسال في نفس اليوم
+static NSInteger lastSentDay = -1;
 
-- (void)viewDidLoad {
-    [super viewDidLoad];
+void checkAndSendStreaks() {
+    NSDateComponents *components = [[NSCalendar currentCalendar] components:(NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute) fromDate:[NSDate date]];
     
-    // خلفية مطابقة لطابع الصورة (داكنة وعميقة)
-    self.view.backgroundColor = [UIColor colorWithRed:0.05 green:0.07 blue:0.12 alpha:1.0];
+    NSInteger currentDay = [components day];
+    NSInteger currentHour = [components hour];
+    NSInteger currentMinute = [components minute];
     
-    // إعداد الشعار أو العنوان العلوي
-    UILabel *titleLabel = [[UILabel alloc] init];
-    titleLabel.text = @"IPA STRONG ⚡️";
-    titleLabel.font = [UIFont boldSystemFontOfSize:28];
-    titleLabel.textColor = [UIColor colorWithRed:0.20 green:0.60 blue:1.00 alpha:1.0];
-    titleLabel.textAlignment = NSTextAlignmentCenter;
-    titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:titleLabel];
-    
-    UILabel *subtitleLabel = [[UILabel alloc] init];
-    subtitleLabel.text = @"أهلاً بك يا boss man\nاستمتع بأفضل التعديلات الحصرية";
-    subtitleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightMedium];
-    subtitleLabel.textColor = [UIColor lightGrayColor];
-    subtitleLabel.textAlignment = NSTextAlignmentCenter;
-    subtitleLabel.numberOfLines = 0;
-    subtitleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:subtitleLabel];
-    
-    // أزرار الواجهة
-    UIStackView *stackView = [[UIStackView alloc] init];
-    stackView.axis = UILayoutConstraintAxisVertical;
-    stackView.spacing = 14;
-    stackView.distribution = UIStackViewDistributionFillEqually;
-    stackView.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:stackView];
-    
-    // 1. زر قناة التليجرام
-    UIButton *telegramButton = [self createButtonWithTitle:@"قناة التيليجرام ⚡️" 
-                                           backgroundColor:[UIColor colorWithRed:0.10 green:0.15 blue:0.25 alpha:1.0] 
-                                                 textColor:[UIColor whiteColor] 
-                                               borderColor:[UIColor colorWithRed:0.20 green:0.60 blue:1.00 alpha:1.0]];
-    [telegramButton addTarget:self action:@selector(openTelegramChannel) forControlEvents:UIControlEventTouchUpInside];
-    [stackView addArrangedSubview:telegramButton];
-    
-    // 2. زر صاحب القناة
-    UIButton *ownerButton = [self createButtonWithTitle:@"صاحب القناة 👤" 
-                                        backgroundColor:[UIColor colorWithRed:0.10 green:0.15 blue:0.25 alpha:1.0] 
-                                              textColor:[UIColor whiteColor] 
-                                            borderColor:[UIColor colorWithRed:0.20 green:0.60 blue:1.00 alpha:1.0]];
-    [ownerButton addTarget:self action:@selector(openOwnerProfile) forControlEvents:UIControlEventTouchUpInside];
-    [stackView addArrangedSubview:ownerButton];
-    
-    // 3. زر Ok لإخفاء الواجهة
-    UIButton *okButton = [self createButtonWithTitle:@"OK 🚀" 
-                                     backgroundColor:[UIColor colorWithRed:0.20 green:0.60 blue:1.00 alpha:1.0] 
-                                           textColor:[UIColor blackColor] 
-                                         borderColor:nil];
-    [okButton addTarget:self action:@selector(dismissWelcomeScreen) forControlEvents:UIControlEventTouchUpInside];
-    [stackView addArrangedSubview:okButton];
-    
-    // تثبيت القيود (Constraints) لتغطية كامل الشاشة وثبات تام
-    [NSLayoutConstraint activateConstraints:@[
-        [titleLabel.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:80],
-        [titleLabel.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
-        
-        [subtitleLabel.topAnchor constraintEqualToAnchor:titleLabel.bottomAnchor constant:15],
-        [subtitleLabel.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:30],
-        [subtitleLabel.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-30],
-        
-        [stackView.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-50],
-        [stackView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:35],
-        [stackView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-35],
-        [okButton.heightAnchor constraintEqualToConstant:52]
-    ]];
-}
-
-- (UIButton *)createButtonWithTitle:(NSString *)title backgroundColor:(UIColor *)bgColor textColor:(UIColor *)textColor borderColor:(UIColor *)borderColor {
-    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
-    [button setTitle:title forState:UIControlStateNormal];
-    [button setTitleColor:textColor forState:UIControlStateNormal];
-    button.titleLabel.font = [UIFont boldSystemFontOfSize:16];
-    button.backgroundColor = bgColor;
-    button.layer.cornerRadius = 14;
-    if (borderColor) {
-        button.layer.borderColor = borderColor.CGColor;
-        button.layer.borderWidth = 1.5;
-    }
-    return button;
-}
-
-- (void)openTelegramChannel {
-    NSURL *url = [NSURL URLWithString:@"https://t.me/ipastrong"];
-    if ([[UIApplication sharedApplication] canOpenURL:url]) {
-        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
-    }
-}
-
-- (void)openOwnerProfile {
-    NSURL *url = [NSURL URLWithString:@"https://t.me/yk5y5"];
-    if ([[UIApplication sharedApplication] canOpenURL:url]) {
-        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
-    }
-}
-
-- (void)dismissWelcomeScreen {
-    [UIView animateWithDuration:0.3 animations:^{
-        welcomeOverlayWindow.alpha = 0.0;
-    } completion:^(BOOL finished) {
-        welcomeOverlayWindow.hidden = YES;
-        welcomeOverlayWindow = nil;
-    }];
-}
-
-@end
-
-static void showWelcomeOverlayWindow() {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (welcomeOverlayWindow) return;
-        
-        UIWindowScene *activeScene = nil;
-        if (@available(iOS 13.0, *)) {
-            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-                if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:[UIWindowScene class]]) {
-                    activeScene = (UIWindowScene *)scene;
-                    break;
+    // حدد الوقت المستهدف (مثلاً الساعة 12:10 ظهراً أو ليلاً)
+    if (currentHour == 12 && currentMinute == 10) {
+        if (lastSentDay != currentDay) {
+            lastSentDay = currentDay;
+            
+            // تنفيذ عملية جلب الأصدقاء والإرسال
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                // استدعاء الأصدقاء الذين لديهم ستريك وإرسال رسالة "🔥"
+                // ملاحظة: هذا مثال هيكلي ويتطلب مطابقة الكلاسات الفعلية لتطبيق تيك توك
+                /*
+                AWEIMManager *manager = [AWEIMManager sharedManager];
+                NSArray *streakFriends = [manager fetchActiveStreakFriends];
+                for (NSString *secUid in streakFriends) {
+                    [manager sendMessage:@"🔥" toUser:secUid completion:^(BOOL success) {
+                        // التحقق من النجاح
+                    }];
+                    // فاصل زمني بسيط لتجنب الحظر السريع
+                    [NSThread sleepForTimeInterval:2.0];
                 }
-            }
+                */
+            });
         }
-        
-        if (@available(iOS 13.0, *)) {
-            if (activeScene) {
-                welcomeOverlayWindow = [[UIWindow alloc] initWithWindowScene:activeScene];
-            } else {
-                welcomeOverlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-            }
-        } else {
-            welcomeOverlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-        }
-        
-        welcomeOverlayWindow.windowLevel = UIWindowLevelAlert + 1;
-        welcomeOverlayWindow.rootViewController = [[StrongWelcomeViewController alloc] init];
-        welcomeOverlayWindow.backgroundColor = [UIColor clearColor];
-        [welcomeOverlayWindow makeKeyAndVisible];
-    });
+    }
 }
 
-__attribute__((constructor))
-static void initialize() {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.8 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        showWelcomeOverlayWindow();
-    });
+%hook AWEAppDelegate
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    BOOL orig = %orig;
+    
+    // إعداد مؤقت (Timer) يفحص الوقت كل دقيقة في الخلفية لتنفيذ الستريك التلقائي
+    [NSTimer scheduledTimerWithTimeInterval:60.0 repeats:YES block:^(NSTimer * _Nonnull timer) {
+        checkAndSendStreaks();
+    }];
+    
+    return orig;
 }
+
+%end
