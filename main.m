@@ -1,16 +1,8 @@
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
+#import <objc/runtime.h>
 
-// دالة وهمية أو استبدادية لتمثيل مدير المحادثات أو خدمة الرسائل في تيك توك
-// ملاحظة: يجب عليك استخراج الأسماء الصحيحة عبر Hopper أو class-dump للنسخة لديك
-@interface AWEIMManager : NSObject
-+ (instancetype)sharedManager;
-- (void)sendMessage:(NSString *)text toUser:(NSString *)secUid completion:(void(^)(BOOL success))completion;
-- (NSArray *)fetchActiveStreakFriends; // دالة افتراضية لجلب قائمة أصدقاء الستريك
-@end
-
-// متغير لتجنب تكرار الإرسال في نفس اليوم
-static NSInteger lastSentDay = -1;
-
+// دالة لتنفيذ الستريك التلقائي
 void checkAndSendStreaks() {
     NSDateComponents *components = [[NSCalendar currentCalendar] components:(NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute) fromDate:[NSDate date]];
     
@@ -18,42 +10,50 @@ void checkAndSendStreaks() {
     NSInteger currentHour = [components hour];
     NSInteger currentMinute = [components minute];
     
-    // حدد الوقت المستهدف (مثلاً الساعة 12:10 ظهراً أو ليلاً)
+    // الوقت المستهدف (الساعة 12:10)
+    static NSInteger lastSentDay = -1;
     if (currentHour == 12 && currentMinute == 10) {
         if (lastSentDay != currentDay) {
             lastSentDay = currentDay;
             
-            // تنفيذ عملية جلب الأصدقاء والإرسال
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                // استدعاء الأصدقاء الذين لديهم ستريك وإرسال رسالة "🔥"
-                // ملاحظة: هذا مثال هيكلي ويتطلب مطابقة الكلاسات الفعلية لتطبيق تيك توك
-                /*
-                AWEIMManager *manager = [AWEIMManager sharedManager];
-                NSArray *streakFriends = [manager fetchActiveStreakFriends];
-                for (NSString *secUid in streakFriends) {
-                    [manager sendMessage:@"🔥" toUser:secUid completion:^(BOOL success) {
-                        // التحقق من النجاح
-                    }];
-                    // فاصل زمني بسيط لتجنب الحظر السريع
-                    [NSThread sleepForTimeInterval:2.0];
-                }
-                */
-            });
+            // هنا يتم وضع منطق إرسال الستريك
+            // (يمكنك استدعاء دوال إرسال الرسائل الخاصة بتيك توك هنا)
+            NSLog(@"[AutoStreak] Time matched! Sending streaks...");
         }
     }
 }
 
-%hook AWEAppDelegate
+// استبدال دالة التشغيل الأصلية للتطبيق لتعمل في الخلفية
+@implementation NSObject (AutoStreakHook)
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    BOOL orig = %orig;
++ (void)load {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        Class appDelegateClass = NSClassFromString(@"AWEAppDelegate");
+        if (appDelegateClass) {
+            SEL originalSelector = NSSelectorFromString(@"application:didFinishLaunchingWithOptions:");
+            SEL swizzledSelector = NSSelectorFromString(@"_swizzled_application:didFinishLaunchingWithOptions:");
+            
+            Method originalMethod = class_getInstanceMethod(appDelegateClass, originalSelector);
+            Method swizzledMethod = class_getInstanceMethod(self, swizzledSelector);
+            
+            if (originalMethod && swizzledMethod) {
+                method_exchangeImplementations(originalMethod, swizzledMethod);
+            }
+        }
+    });
+}
+
+- (BOOL)_swizzled_application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // استدعاء الدالة الأصلية حتى لا يتوقف التطبيق
+    BOOL result = [self _swizzled_application:application didFinishLaunchingWithOptions:launchOptions];
     
-    // إعداد مؤقت (Timer) يفحص الوقت كل دقيقة في الخلفية لتنفيذ الستريك التلقائي
+    // تشغيل المؤقت للتحقق من الوقت كل دقيقة
     [NSTimer scheduledTimerWithTimeInterval:60.0 repeats:YES block:^(NSTimer * _Nonnull timer) {
         checkAndSendStreaks();
     }];
     
-    return orig;
+    return result;
 }
 
-%end
+@end
