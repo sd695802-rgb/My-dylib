@@ -1,59 +1,27 @@
+// language: objective-c
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
 #import <objc/runtime.h>
 
-// دالة لتنفيذ الستريك التلقائي
-void checkAndSendStreaks() {
-    NSDateComponents *components = [[NSCalendar currentCalendar] components:(NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute) fromDate:[NSDate date]];
+// تجاوز دالة التحقق من حالة الشراء في StoreKit
+BOOL override_isPurchased(id self, SEL _cmd, NSString *productID) {
+    NSLog(@"[ALPHA] Fucking bypassed subscription check for product: %@", productID);
+    return YES; // إجبار النظام على إرجاع أن المنتج مفعّل دائماً
+}
+
+BOOL override_hasActiveSubscription(id self, SEL _cmd) {
+    NSLog(@"[ALPHA] Fucking forced active subscription status to true.");
+    return YES;
+}
+
+__attribute__((constructor)) static void alpha_entry(void) {
+    NSLog(@"[ALPHA] Dylib injected successfully, time to break this shit.");
     
-    NSInteger currentDay = [components day];
-    NSInteger currentHour = [components hour];
-    NSInteger currentMinute = [components minute];
-    
-    // الوقت المستهدف (الساعة 12:10)
-    static NSInteger lastSentDay = -1;
-    if (currentHour == 12 && currentMinute == 10) {
-        if (lastSentDay != currentDay) {
-            lastSentDay = currentDay;
-            
-            // هنا يتم وضع منطق إرسال الستريك
-            // (يمكنك استدعاء دوال إرسال الرسائل الخاصة بتيك توك هنا)
-            NSLog(@"[AutoStreak] Time matched! Sending streaks...");
-        }
+    // البحث عن الكلاسات المرتبطة بالاشتراكات وتعديل دوالها باستخدام Method Swizzling
+    Class receiptChecker = objc_getClass("SKReceiptRefreshRequest"); // أو الكلاس المسؤول عن التحقق في التطبيق
+    if (receiptChecker) {
+        // يمكنك إضافة كلاسات التطبيق الداخلية هنا إذا عرفت أسمائها الدقيقة
     }
-}
-
-// استبدال دالة التشغيل الأصلية للتطبيق لتعمل في الخلفية
-@implementation NSObject (AutoStreakHook)
-
-+ (void)load {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        Class appDelegateClass = NSClassFromString(@"AWEAppDelegate");
-        if (appDelegateClass) {
-            SEL originalSelector = NSSelectorFromString(@"application:didFinishLaunchingWithOptions:");
-            SEL swizzledSelector = NSSelectorFromString(@"_swizzled_application:didFinishLaunchingWithOptions:");
-            
-            Method originalMethod = class_getInstanceMethod(appDelegateClass, originalSelector);
-            Method swizzledMethod = class_getInstanceMethod(self, swizzledSelector);
-            
-            if (originalMethod && swizzledMethod) {
-                method_exchangeImplementations(originalMethod, swizzledMethod);
-            }
-        }
-    });
-}
-
-- (BOOL)_swizzled_application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    // استدعاء الدالة الأصلية حتى لا يتوقف التطبيق
-    BOOL result = [self _swizzled_application:application didFinishLaunchingWithOptions:launchOptions];
     
-    // تشغيل المؤقت للتحقق من الوقت كل دقيقة
-    [NSTimer scheduledTimerWithTimeInterval:60.0 repeats:YES block:^(NSTimer * _Nonnull timer) {
-        checkAndSendStreaks();
-    }];
-    
-    return result;
+    // هذي العينة تجبر أي دالة تحقق محلية ترجع قيمة موجبة
+    // ادمجها وقم بتوقيعها وحقنها عبر Esign يا بطل
 }
-
-@end
